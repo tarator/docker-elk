@@ -11,15 +11,16 @@ services:
         source: ./elasticsearch/config/elasticsearch.yml
         target: /usr/share/elasticsearch/config/elasticsearch.yml
         read_only: true
-      - type: volume
-        source: elasticsearch
+      - type: bind
+        source: ./elasticsearch_data
         target: /usr/share/elasticsearch/data
-    ports:
-      - "9200:9200"
-      - "9300:9300"
+	read_oonly: false
+#    ports:
+#      - "9200:9200"
+#      - "9300:9300"
     environment:
-      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
-      ELASTIC_PASSWORD: changeme
+      ES_JAVA_OPTS: "-Xmx1024m -Xms256m"
+      ELASTIC_PASSWORD: change_me
       # Use single node discovery in order to disable production mode and avoid bootstrap checks.
       # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
       discovery.type: single-node
@@ -41,12 +42,13 @@ services:
         target: /usr/share/logstash/pipeline
         read_only: true
     ports:
-      - "5044:5044"
-      - "5000:5000/tcp"
-      - "5000:5000/udp"
-      - "9600:9600"
+#      - "5044:5044"
+#      - "5000:5000/tcp"
+#      - "5000:5000/udp"
+      - "127.0.0.1:12201:12201/udp"
+#      - "9600:9600"
     environment:
-      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+      LS_JAVA_OPTS: "-Xmx1024m -Xms256m"
     networks:
       - elk
     depends_on:
@@ -63,11 +65,32 @@ services:
         target: /usr/share/kibana/config/kibana.yml
         read_only: true
     ports:
-      - "5601:5601"
+      - "127.0.0.1:4041:5601"
     networks:
       - elk
     depends_on:
       - elasticsearch
+
+
+
+  httpd:
+    image: httpd:latest
+    depends_on:
+      - logstash
+    ports:
+      - 4042:80
+    networks:
+      - elk
+    logging:
+      driver: gelf
+      options:
+        # Use udp://host.docker.internal:12201 when you are using Docker Desktop for Mac
+        # docs: https://docs.docker.com/docker-for-mac/networking/#i-want-to-connect-from-a-container-to-a-service-on-the-host
+        # issue: https://github.com/lvthillo/docker-elk/issues/1
+        gelf-address: "udp://localhost:12201"
+
+
+
 
 networks:
   elk:

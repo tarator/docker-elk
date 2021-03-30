@@ -14,7 +14,7 @@ services:
       - type: bind
         source: ./elasticsearch_data
         target: /usr/share/elasticsearch/data
-	read_oonly: false
+        read_only: false
 #    ports:
 #      - "9200:9200"
 #      - "9300:9300"
@@ -71,30 +71,9 @@ services:
     depends_on:
       - elasticsearch
 
-
-
-  httpd:
-    image: httpd:latest
-    depends_on:
-      - logstash
-    ports:
-      - 4042:80
-    networks:
-      - elk
-    logging:
-      driver: gelf
-      options:
-        # Use udp://host.docker.internal:12201 when you are using Docker Desktop for Mac
-        # docs: https://docs.docker.com/docker-for-mac/networking/#i-want-to-connect-from-a-container-to-a-service-on-the-host
-        # issue: https://github.com/lvthillo/docker-elk/issues/1
-        gelf-address: "udp://localhost:12201"
-
-
-
-
 networks:
   elk:
     driver: bridge
 
-volumes:
-  elasticsearch:
+#volumes:
+#  elasticsearch:
